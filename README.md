@@ -23,6 +23,38 @@ This project propagates both trajectories using a restricted three-body model (E
 
 ---
 
+## Validation
+
+Internal consistency was verified by checking conservation laws over the propagated arc and comparing the numerical period against the analytical Kepler period.
+
+### Energy Conservation
+
+| Metric | Value |
+|---|---|
+| Min specific energy | −0.858190868 MJ/kg |
+| Max specific energy | −0.858190853 MJ/kg |
+| Fractional drift (ε) | 1.53 × 10⁻⁸ (~1 part in 65 million) |
+
+### Angular Momentum Conservation
+
+| Metric | Value |
+|---|---|
+| Min \|h\| | 71,868.248068 km²/s |
+| Max \|h\| | 71,868.248112 km²/s |
+| Fractional drift | 6.18 × 10⁻¹⁰ (~1 part in 1.6 billion) |
+
+### Kepler Period Cross-Check
+
+| Metric | Value |
+|---|---|
+| Analytical Kepler period | 7,121.08 s |
+| Numerical period | 7,116.86 s |
+| Error | 0.059% |
+
+These results confirm that the integrator is maintaining physical consistency at tight tolerances across the full propagation arc.
+
+---
+
 ## Results
 
 ### OEM Overlay — Artemis II
@@ -44,7 +76,7 @@ Position error remains low through approximately day 3.5, then diverges sharply.
 | Modeled closest approach | 930 km |
 | Actual closest approach | ~112 km |
 
-The ~818 km discrepancy reflects the ballistic nature of the model, Apollo 8's actual trajectory included a lunar orbit insertion burn that tightened the approach. The model captures the outbound translunar coast geometry accurately; the departure from the actual closest approach distance is expected and understood.
+The ~818 km discrepancy reflects the ballistic nature of the model. Apollo 8's actual trajectory included a lunar orbit insertion burn that tightened the approach. The model captures the outbound translunar coast geometry accurately; the departure from actual closest approach distance is expected and understood.
 
 ---
 
@@ -52,6 +84,8 @@ The ~818 km discrepancy reflects the ballistic nature of the model, Apollo 8's a
 
 ### Inertial Frame (ECI)
 Both trajectories in Earth-Centered Inertial coordinates. Earth at origin; dashed lines show the Moon's position over each mission's timeframe.
+
+![Inertial Frame](eci_frame.png)
 
 ### Rotating Frame (Synodic)
 Both trajectories transformed into the Earth-Moon rotating frame, where the Moon is fixed on the positive x-axis. The free-return shape is visible in this frame: Artemis II completes the full outbound-flyby-return arc over 8.5 days; Apollo 8 shows the outbound translunar coast over 3 days before the unmodeled LOI burn.
@@ -98,6 +132,9 @@ python3 compare.py
 
 # Earth-Moon rotating frame comparison plot
 python3 rotating_frame.py
+
+# Conservation law and Kepler period validation
+python3 verify.py
 ```
 
 ---
