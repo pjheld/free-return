@@ -88,9 +88,14 @@ Both trajectories in Earth-Centered Inertial coordinates. Earth at origin; dashe
 ![Inertial Frame](eci_frame.png)
 
 ### Rotating Frame (Synodic)
-Both trajectories transformed into the Earth-Moon rotating frame, where the Moon is fixed on the positive x-axis. The free-return shape is visible in this frame: Artemis II completes the full outbound-flyby-return arc over 8.5 days; Apollo 8 shows the outbound translunar coast over 3 days before the unmodeled LOI burn.
+Both trajectories transformed into the Earth-Moon rotating frame, where the Moon is fixed on the positive x-axis. The free-return shape is visible in this frame: Artemis II completes the full outbound-flyby-return arc over approximately 8.5 days, with the characteristic free-return crossover visible near Earth on the return leg; Apollo 8 shows the outbound translunar coast over 3 days before the unmodeled LOI burn. The rotating frame transformation applies a 2D rotation in Earth's equatorial plane, which is a standard simplification for near-planar lunar trajectories.
 
 ![Rotating Frame](rotating_frame.png)
+
+### OEM vs Propagated — Inertial Frame 3D
+The propagated Artemis II trajectory (cyan dashed) overlaid against the actual flight data from the mission OEM file (black). Both paths track closely through the translunar coast and lunar flyby, diverging on the return leg where unmodeled correction burns (OTC-2) redirect the actual trajectory. The OEM loop near Earth reflects the parking orbit prior to TLI, which the propagator does not capture as it begins at the TLI state vector.
+
+![OEM vs Propagated](oem_vs_propagator_3d.png)
 
 ---
 
@@ -135,6 +140,9 @@ python3 rotating_frame.py
 
 # Conservation law and Kepler period validation
 python3 verify.py
+
+# OEM vs propagated 3D validation plot
+python3 oem_vs_propagator_3d.py
 ```
 
 ---
