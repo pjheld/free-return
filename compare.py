@@ -11,19 +11,21 @@ epoch = datetime(2026, 4, 2, 23, 56, 22)
 elapsed_seconds = [(datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f") - epoch).total_seconds() for t in timestamps[349:]]
 
 solution = run()
-states_propagated = solution.sol(elapsed_seconds)
+states_propagated = solution.sol(elapsed_seconds) #6xN
 
-oem_states = np.array(rows[349:])
+oem_states = np.array(rows[349:]) #Nx6
 
 pro_position = states_propagated[0:3, :]
 oem_position = oem_states[:, 0:3]
 
 error = np.linalg.norm(pro_position - oem_position.T, axis=0)
 
-print("max error (km):", error.max())
-print("mean error (km):", error.mean())
-
 elapsed_arr = np.array(elapsed_seconds)
+mask = elapsed_arr <= 300000
+
+print("max error up to 300,000 s (km):", error[mask].max())
+print("mean error up to 300,000 s (km):", error[mask].mean())
+
 idx = np.argmin(np.abs(elapsed_arr - 300000))
 print("error at 300,000 s:", error[idx])
 
@@ -43,10 +45,12 @@ ax2.set_xlabel("seconds since epoch")
 ax2.set_ylabel("specific orbital energy (km²/s²)")
 ax2.set_title("OEM Specific Orbital Energy")
 
-# Energy slowly rises (becomes less negative) from 0 to ~300,000 s as the s/c coasts outward —
-# expected in 3-body motion as the Moon continuously exchanges energy with the spacecraft.
-# The sharp change near ~340,000 s corresponds to closest lunar approach and aligns with
-# the spike in position error, where unmodeled correction burns cause the trajectories to diverge.
+
+plt.figure()
+plt.plot(elapsed_seconds[:-1], np.diff(oem_epsilon))
+plt.xlabel("seconds since epoch")
+plt.ylabel("step change in specific energy (km²/s²)")
+plt.title("OEM energy jumps (spikes = burns)")
 
 plt.tight_layout()
 plt.show()

@@ -36,7 +36,7 @@ prop_z = states[2, :]
 fig = plt.figure(figsize=(12, 8))
 ax = fig.add_subplot(111, projection='3d')
 
-ax.plot(oem_x, oem_y, oem_z, color='black', linewidth=1.5, label='OEM (actual)')
+ax.plot(oem_x, oem_y, oem_z, color='black', linewidth=1.5, label='OEM (NASA planning)')
 ax.plot(prop_x, prop_y, prop_z, color='cyan', linewidth=1.5, linestyle='--', label='Propagated')
 ax.scatter(0, 0, 0, color='blue', s=100, label='Earth')
 

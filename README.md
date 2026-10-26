@@ -1,99 +1,75 @@
 # free-return
 
-A restricted three-body lunar trajectory simulator comparing the Apollo 8 and Artemis II translunar trajectories. Built from scratch in Python using real mission data and JPL ephemeris.
+An Earth–Moon trajectory simulator that propagates the Apollo 8 and Artemis II free-return trajectories, built from scratch in Python with JPL ephemeris, NASA's Artemis II ephemeris, and 1969 Apollo 8 postflight data.
+
+![Rotating Frame](rotating_frame.png)
+
+## Key Results
+
+- Artemis II propagation stays within **~1,900 km** of NASA's planning ephemeris at 3.5 days (~0.5% of the Earth–Moon distance)
+- Two-body verification conserves energy to **~1 part in 56 million** and angular momentum to **~1 part in 1.6 billion**
+- Detected and sized a planned correction burn in the reference ephemeris (**~0.25 m/s**, ~30 km effect) from jumps in specific energy
+- Reconstructed Apollo 8's TLI state in ECI from 1969 Boeing postflight trajectory data
 
 ---
 
 ## Background
 
-A free-return trajectory is a translunar path engineered so that a spacecraft will naturally loop around the Moon and return to Earth using only gravity, no major engine burns required after the initial translunar injection. Both Apollo 8 (1968) and Artemis II (2026) flew variations of this trajectory, but with meaningful differences: Apollo 8 required a lunar orbit insertion burn to enter orbit around the Moon before returning, while Artemis II flew a pure free-return flyby with no lunar orbit insertion.
-
-This project propagates both trajectories using a restricted three-body model (Earth + Moon + spacecraft) and visualizes them in both the inertial ECI frame and the Earth-Moon rotating (synodic) frame, where the characteristic free-return shape becomes apparent.
+A free-return trajectory is a translunar path that loops around the Moon and returns to Earth on gravity alone, with no major burns after translunar injection (TLI). Apollo 8 (1968) used one before entering lunar orbit; Artemis II (2026) flew a pure free-return flyby. This project propagates both from their post-TLI states and visualizes them in the inertial (ECI) and Earth–Moon rotating frames.
 
 ---
 
-## What the Model Does
+## Model
 
-- **Propagator:** `scipy.integrate.solve_ivp` with RK45, `rtol=1e-9`, `atol=1e-12`
-- **Gravitational model:** Earth point-mass + Moon point-mass (restricted three-body)
-- **Moon position:** JPL DE421 ephemeris via Skyfield — queried at each integrator timestep
-- **Artemis II initial state:** Sourced from the mission OEM file at TLI epoch (`2026-04-02T23:56:22 UTC`)
-- **Apollo 8 initial state:** Converted from polar to ECI using flight path angle, heading, geodetic latitude, and longitude per *Boeing Postflight Trajectory AS-503, Table 3-V*
-- **Dense output:** Enabled for continuous trajectory evaluation at arbitrary time points
+- **Gravity:** Earth and Moon point masses in an Earth-centered frame, including the Moon's indirect term
+- **Moon position:** JPL DE421 via Skyfield, evaluated at each integrator step
+- **Integrator:** `scipy.integrate.solve_ivp`, RK45, `rtol=1e-9`, `atol=1e-12`, dense output
+- **Artemis II initial state:** first post-TLI state in the NASA OEM (`2026-04-02T23:56:22.480 UTC`, ~790 km altitude)
+- **Apollo 8 initial state:** TLI flight parameters (altitude, velocity, flight path angle, heading, geodetic latitude, longitude) converted to ECI
 
 ---
 
-## Validation
+## Verification
 
-Internal consistency was verified by checking conservation laws over the propagated arc and comparing the numerical period against the analytical Kepler period.
+Earth-only (two-body) propagations check the integrator and gravity model against quantities that must be conserved and a known analytical result.
 
-### Energy Conservation
-
-| Metric | Value |
+| Check | Result |
 |---|---|
-| Min specific energy | −0.858190868 MJ/kg |
-| Max specific energy | −0.858190853 MJ/kg |
-| Fractional drift (ε) | 1.53 × 10⁻⁸ (~1 part in 65 million) |
-
-### Angular Momentum Conservation
-
-| Metric | Value |
-|---|---|
-| Min \|h\| | 71,868.248068 km²/s |
-| Max \|h\| | 71,868.248112 km²/s |
-| Fractional drift | 6.18 × 10⁻¹⁰ (~1 part in 1.6 billion) |
-
-### Kepler Period Cross-Check
-
-| Metric | Value |
-|---|---|
-| Analytical Kepler period | 7,121.08 s |
-| Numerical period | 7,116.86 s |
-| Error | 0.059% |
-
-These results confirm that the integrator is maintaining physical consistency at tight tolerances across the full propagation arc.
+| Specific energy drift (10 days) | 1.78 × 10⁻⁸ (~1 part in 56 million) |
+| Angular momentum drift (10 days) | 6.18 × 10⁻¹⁰ (~1 part in 1.6 billion) |
+| Kepler period vs. 2π√(a³/μ) | 0.059% (limited by crossing-time detection) |
 
 ---
 
 ## Results
 
-### OEM Overlay — Artemis II
+### Artemis II vs. NASA Planning Ephemeris
 
-The propagated trajectory was compared against the Artemis II OEM reference data over the translunar coast:
-
-| Metric | Value |
-|---|---|
-| Error at 300,000 s (~3.5 days) | 3,790 km |
-| Mean position error (full arc) | 27,643 km |
-| Max position error | 169,688 km |
-
-Position error remains low through approximately day 3.5, then diverges sharply. This is consistent with the first unmodeled correction burn (OTC-2) occurring near closest lunar approach, after which the ballistic model and the actual trajectory separate. The model captures the outbound translunar coast accurately; it does not attempt to replicate post-flyby maneuvers.
-
-### Apollo 8 Closest Lunar Approach
+Compared over the translunar coast, before closest lunar approach:
 
 | Metric | Value |
 |---|---|
-| Modeled closest approach | 930 km |
-| Actual closest approach | ~112 km |
+| Error at 300,000 s (~3.5 days) | 1,926 km |
+| Max error, 0–300,000 s | 1,924 km |
+| Mean error, 0–300,000 s | 817 km |
 
-The ~818 km discrepancy reflects the ballistic nature of the model. Apollo 8's actual trajectory included a lunar orbit insertion burn that tightened the approach. The model captures the outbound translunar coast geometry accurately; the departure from actual closest approach distance is expected and understood.
+The reference contains one planned burn in this window (~172,000 s, flight day 4), identified from a jump in the OEM's specific energy. It is about 0.25 m/s and accounts for roughly 30 km of the error. The remainder is attributed to unmodeled forces, mainly Earth oblateness (J2) and solar gravity. After closest approach, the lunar flyby amplifies small differences, so error is reported up to 300,000 s.
+
+### Apollo 8
+
+Apollo 8 is propagated as a ballistic free-return from TLI. The flown spacecraft also performed a midcourse correction (~6 m/s, ~11 hours after launch) that is not modeled, so its closest approach is not used for validation. The modeled closest approach is 1,384 km from the Moon's center.
 
 ---
 
 ## Figures
 
 ### Inertial Frame (ECI)
-Both trajectories in Earth-Centered Inertial coordinates. Earth at origin; dashed lines show the Moon's position over each mission's timeframe.
+Both trajectories in Earth-centered inertial coordinates; dashed lines show the Moon's path over each mission.
 
 ![Inertial Frame](eci_frame.png)
 
-### Rotating Frame (Synodic)
-Both trajectories transformed into the Earth-Moon rotating frame, where the Moon is fixed on the positive x-axis. The free-return shape is visible in this frame: Artemis II completes the full outbound-flyby-return arc over approximately 8.5 days, with the characteristic free-return crossover visible near Earth on the return leg; Apollo 8 shows the outbound translunar coast over 3 days before the unmodeled LOI burn. The rotating frame transformation applies a 2D rotation in Earth's equatorial plane, which is a standard simplification for near-planar lunar trajectories.
-
-![Rotating Frame](rotating_frame.png)
-
-### OEM vs Propagated — Inertial Frame 3D
-The propagated Artemis II trajectory (cyan dashed) overlaid against the actual flight data from the mission OEM file (black). Both paths track closely through the translunar coast and lunar flyby, diverging on the return leg where unmodeled correction burns (OTC-2) redirect the actual trajectory. The OEM loop near Earth reflects the parking orbit prior to TLI, which the propagator does not capture as it begins at the TLI state vector.
+### OEM vs. Propagated (Artemis II)
+Propagated trajectory (cyan dashed) against NASA's planning ephemeris (black). The paths track through the translunar coast and separate after the lunar flyby.
 
 ![OEM vs Propagated](oem_vs_propagator_3d.png)
 
@@ -101,54 +77,33 @@ The propagated Artemis II trajectory (cyan dashed) overlaid against the actual f
 
 ## Limitations
 
-- **Ballistic model only** — no delta-V burns modeled (no OTC-2/RTC-1 for Artemis II, no LOI for Apollo 8)
-- **Point-mass gravity** — no solar gravity, no lunar oblateness, no SRP
-- **Apollo 8 outbound only** — 3-day propagation to closest lunar approach; return leg not modeled due to LOI burn dependency
-- **Artemis II** — 8.5-day propagation from TLI epoch captures the full free-return arc; small correction burns cause gradual divergence from the actual trajectory after closest approach
-
----
-
-## Dependencies
-
-```
-numpy
-scipy
-matplotlib
-skyfield
-```
-
-Install with:
-```bash
-pip install numpy scipy matplotlib skyfield
-```
-
-The Skyfield ephemeris file (`de421.bsp`) will download automatically on first run.
+- No burns modeled (Artemis II planned correction burn; Apollo 8 MCC-1 and LOI)
+- No Earth oblateness (J2), solar gravity, lunar oblateness, or solar radiation pressure
+- Artemis II reference is a planning ephemeris, not reconstructed flight data
+- Apollo 8 propagated outbound only (3 days to closest approach)
 
 ---
 
 ## How to Run
 
+Run from inside the `free-return` folder.
+
 ```bash
-# Inertial frame plot + Apollo 8 closest approach validation
-python3 propagator.py
+pip install numpy scipy matplotlib skyfield
 
-# OEM overlay and error analysis (requires Artemis II OEM file)
-python3 compare.py
-
-# Earth-Moon rotating frame comparison plot
-python3 rotating_frame.py
-
-# Conservation law and Kepler period validation
-python3 verify.py
-
-# OEM vs propagated 3D validation plot
-python3 oem_vs_propagator_3d.py
+python3 propagator.py            # ECI plot + Apollo 8 closest approach
+python3 compare.py               # Artemis II error analysis + OEM burn detection
+python3 rotating_frame.py        # Earth–Moon rotating frame plot
+python3 verify.py                # Two-body verification
+python3 oem_vs_propagator_3d.py  # OEM vs. propagated 3D plot
 ```
+
+The Skyfield ephemeris file (`de421.bsp`) downloads automatically on first run.
 
 ---
 
 ## Data Sources
 
-- **Artemis II OEM:** NASA AROW (Artemis Real-time Orbit Website), publicly available mission trajectory data, April 2026
-- **Apollo 8 TLI state:** *Saturn V Launch Vehicle Flight Evaluation Report AS-503*, Boeing, Table 3-V
+- **Artemis II:** NASA AROW Orbit Ephemeris Message, April 2026 (planning product)
+- **Apollo 8 TLI state:** *Apollo/Saturn V Postflight Trajectory – AS-503*, Boeing, D5-15794 (1969), Table 3-V
 - **Moon ephemeris:** JPL DE421 via [Skyfield](https://rhodesmill.org/skyfield/)

@@ -1,3 +1,4 @@
+
 # Run Artemis II propagation to get states over 10 days
 # At each timestep, get the Moon's position
 # Compute the angle the Moon makes with the x-axis at each timestep
@@ -16,7 +17,7 @@ epoch = datetime(2026, 4, 2, 23, 56, 22)
 solution = run()
 
 # Sample trajectory at evenly spaced points
-t_points = np.linspace(0, 8.5 * 24 * 3600, 1000)
+t_points = np.linspace(0, 8.68 * 24 * 3600, 1000)
 states = solution.sol(t_points)
 sc_x = states[0,:]
 sc_y = states[1,:]
@@ -98,4 +99,5 @@ ax.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig('rotating_frame.png', dpi=150, bbox_inches='tight')
 plt.show()
+
 

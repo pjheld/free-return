@@ -21,7 +21,7 @@ print("epsilon drift: ", epsilon.max() - epsilon.min())
 
 ## Angular Momentum Magnitude -----------------------------------------------------------------------
 # how much rotational motion does the s/c have around Earth. For 2-body = constant
-angular_momentum = np.cross(r,v, axisa=0, axisb=0)
+angular_momentum = np.cross(r,v, axisa=0, axisb=0) #input is 3xN arrays, output is Nx3
 angular_momentum_norm = np.linalg.norm(angular_momentum, axis = 1)
 
 print("min h: ",angular_momentum_norm.min(), "max h: ", angular_momentum_norm.max())
@@ -41,5 +41,3 @@ print("T_kepler: " , T_kepler)
 print("T_numerical: ", T_numerical)
 print("error %: ", abs(T_numerical - T_kepler) / T_kepler*100)
 # 0.059% error. acceptable for numerical integrator
-# My point-mass gravity model matches the real Artemis II trajectory to within 3,790 km through the first 4 days of ballistic flight, after which error grows due to a trajectory correction burn that my model doesn't account for.
-# A simple two-force model - Earth and the moon's gravity - reproduces a real lunar mission trajectory to within 3,790 kilometers using publicly avaiable flight data. The limitation is known

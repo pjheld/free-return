@@ -27,7 +27,7 @@ timestamps, rows = extract("Artemis_II_OEM_2026_04_04_to_EI.asc")
 state_0 = rows[349]
 
 # Integrator
-def run(two_body=False, t_span = (0, 10*24*60*60), state_0 = None, epoch=datetime(2026, 4, 2, 23, 56, 22), max_step=np.inf):
+def run(two_body=False, t_span = (0, 8.8*24*60*60), state_0 = None, epoch=datetime(2026, 4, 2, 23, 56, 22), max_step=np.inf,):
     
     if state_0 is None:
         state_0 = rows[349]
@@ -42,8 +42,8 @@ def run(two_body=False, t_span = (0, 10*24*60*60), state_0 = None, epoch=datetim
         if two_body:
             a_total = a_earth
         else:
-            moon_position = skyview(t_current.year, t_current.month, t_current.day, t_current.hour, t_current.minute, t_current.second)
-            a_moon = mu_moon * (moon_position - r) / np.linalg.norm(moon_position - r)**3
+            moon_position = skyview(t_current.year, t_current.month, t_current.day, t_current.hour, t_current.minute, t_current.second+t_current.microsecond/1e6)
+            a_moon = mu_moon * (moon_position - r) / np.linalg.norm(moon_position - r)**3 - mu_moon * moon_position / np.linalg.norm(moon_position)**3
             a_total = a_earth + a_moon
         
         return np.concatenate([v, a_total])
@@ -56,14 +56,16 @@ if __name__ == "__main__":
     solution_apollo8 = run(state_0=state_apollo8, t_span=(0, 259200), epoch=tli_datetime, max_step=500)
     moon_times_check = solution_apollo8.t
     min_moon_dist = np.inf
+    t_min = None
     for t in moon_times_check:
         t_current = tli_datetime + timedelta(seconds=t)
-        mp = skyview(t_current.year, t_current.month, t_current.day, t_current.hour, t_current.minute, t_current.second)
+        mp = skyview(t_current.year, t_current.month, t_current.day, t_current.hour, t_current.minute, t_current.second+t_current.microsecond/1e6)
         dist = np.linalg.norm(solution_apollo8.sol(t)[:3] - mp)
         if dist < min_moon_dist:
             min_moon_dist = dist
+            t_min = t
     print("Closest Moon approach:", min_moon_dist, "km")
-
+    print("Time of closest approach:", t_min, "s")
 
     # Extract trajectories    
     art_x = solution_artemis.y[0, :]
@@ -123,4 +125,7 @@ if __name__ == "__main__":
     ax.set_title('Apollo 8 vs Artemis II — Free Return Trajectories')
     ax.legend()
 
+    plt.savefig("eci_frame.png", dpi=150, bbox_inches="tight")
     plt.show()
+
+    

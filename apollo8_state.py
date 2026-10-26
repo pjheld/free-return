@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 # Apollo 8 TLI conditions per "Boeing Postflight Trajectory AS-503, Table 3-V
 # Range time: 10565.51 sec after launch (Dec 21 1968, 12:51:00 UTC)
 # Altitude: 346.73 km
-# Space-fixed velocity: 10822.05 m/s
+# Space-fixed velocity: 10822.05 m/s, inertial
 # Flight path angle: 7.897 deg
 # Heading angle: 67.494 deg
 # Geodetic latitude: 21.477 deg N
@@ -25,9 +25,8 @@ lat = np.deg2rad(lat_deg)
 lon = np.deg2rad(lon_deg)
 fpa = np.deg2rad(fpa_deg)
 hdg = np.deg2rad(hdg_deg)
-#hdg = np.deg2rad(-hdg_deg)
 
-R_earth = 6371 # km / mean
+R_earth = 6371 # km
 r = R_earth + alt_km
 
 X = r * np.cos(lat) * np.cos(lon)
@@ -45,8 +44,8 @@ vz_ef =  v_north*np.cos(lat)                             + v_up*np.sin(lat)
 
 ts=load.timescale()
 launch_time = ts.utc(1968,12,21,12,51,0)
-tli_time = ts.tt_jd(launch_time.tt + 10565.51 / 86400)
-gst = tli_time.gast * np.pi / 12
+tli_time = ts.tt_jd(launch_time.tt + 10565.51 / 86400) #terrestrial time for simple addition of elapsed time
+gst = tli_time.gast * np.pi / 12 # greenwich sidereal time
 tli_datetime = datetime(1968, 12, 21, 12, 51, 0, tzinfo=timezone.utc) + timedelta(seconds=10565.51)
 
 x = X * np.cos(gst) - Y * np.sin(gst)
@@ -58,6 +57,6 @@ vz = vz_ef
 
 state_apollo8 = np.array([x, y, z, vx, vy, vz])
 
-# print(tli_datetime)
+
 
 
